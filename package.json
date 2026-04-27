@@ -1,0 +1,18 @@
+{
+  "name": "feijoada-dede-hostinger-mysql",
+  "version": "2.0.6",
+  "description": "Feijoada da Dedê - versão completa com pedido manual e cardápio disponível/esgotado",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node tests.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "mysql2": "^3.11.3"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

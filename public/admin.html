@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin - Feijoada da Dedê</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Arial, Helvetica, sans-serif; background: #fff7ed; color: #1f2937; }
+    header { background: #431407; color: white; padding: 18px 16px; box-shadow: 0 3px 10px rgba(0,0,0,.18); }
+    .wrap { max-width: 1050px; margin: 0 auto; padding: 16px; }
+    h1 { margin: 0; }
+    .card { background: white; border-radius: 20px; padding: 18px; box-shadow: 0 2px 8px rgba(0,0,0,.07); margin-bottom: 14px; }
+    .pedido-novo {
+      border: 4px solid #dc2626;
+      box-shadow: 0 0 0 4px rgba(220,38,38,.18), 0 8px 18px rgba(220,38,38,.25);
+      animation: piscarPedido 1s infinite alternate;
+    }
+    @keyframes piscarPedido {
+      from { background: #fff; }
+      to { background: #fff1f2; }
+    }
+    .atalho-box {
+      background: #dcfce7;
+      color: #166534;
+      border-radius: 16px;
+      padding: 12px;
+      font-weight: 800;
+      margin-bottom: 14px;
+    }
+    input, textarea, select { width: 100%; border: 1px solid #e5e7eb; border-radius: 14px; padding: 12px; font-size: 16px; outline: none; background: white; }
+    textarea { min-height: 70px; resize: vertical; }
+    label { font-weight: bold; font-size: 13px; display: block; margin-bottom: 6px; }
+    .grid { display: grid; grid-template-columns: 1.2fr .5fr 1.5fr; gap: 10px; }
+    .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+    .subtabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+    .subtabs button { background:#e5e7eb; color:#111827; }
+    .subtabs button.active { background:#9a3412; color:white; }
+    button { border: 0; border-radius: 14px; padding: 12px 14px; font-weight: 900; cursor: pointer; }
+    .primary { background: #9a3412; color: white; }
+    .green { background: #16a34a; color: white; }
+    .red { background: #dc2626; color: white; }
+    .gray { background: #e5e7eb; color: #111827; }
+    .blue { background: #2563eb; color: white; }
+    .status-on { background: #dcfce7; color: #166534; padding: 6px 10px; border-radius: 999px; font-weight: 900; font-size: 12px; }
+    .status-off { background: #fee2e2; color: #991b1b; padding: 6px 10px; border-radius: 999px; font-weight: 900; font-size: 12px; }
+    .item-top { display: flex; justify-content: space-between; gap: 10px; align-items: center; margin-bottom: 12px; }
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .hidden { display: none; }
+    .error { background: #fee2e2; color: #991b1b; border-radius: 14px; padding: 12px; margin: 10px 0; }
+    .success { background: #dcfce7; color: #166534; border-radius: 14px; padding: 12px; margin: 10px 0; }
+    .pedido-head { display:flex; justify-content:space-between; gap:12px; align-items:flex-start; border-bottom:1px solid #f3f4f6; padding-bottom:10px; margin-bottom:10px; }
+    .pedido-itens { margin: 10px 0; padding-left: 18px; }
+    .pedido-itens li { margin-bottom: 5px; }
+    .badge { display:inline-block; border-radius:999px; padding:5px 9px; font-size:12px; font-weight:900; background:#ffedd5; color:#7c2d12; }
+    .total { font-size: 20px; font-weight: 900; color:#7c2d12; }
+    @media (max-width: 760px) {
+      .grid { grid-template-columns: 1fr; }
+      .wrap { padding: 12px; }
+      button { width: 100%; }
+      .actions { display: grid; grid-template-columns: 1fr; }
+      .pedido-head { display:block; }
+    }
+    @media print {
+      @page {
+        size: 58mm auto;
+        margin: 0;
+      }
+
+      html, body {
+        width: 58mm;
+        height: auto;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: white !important;
+        overflow: hidden;
+      }
+
+      body * {
+        visibility: hidden !important;
+      }
+
+      #printArea, #printArea * {
+        visibility: visible !important;
+      }
+
+      #printArea {
+        display: block !important;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 54mm;
+        max-width: 54mm;
+        margin-left: 3mm;
+        margin-right: 1mm;
+        padding: 1.5mm;
+        background: white;
+        color: black;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 10px;
+        line-height: 1.2;
+        box-sizing: border-box;
+      }
+
+      .cupom {
+        width: 100%;
+        max-width: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+
+      .no-print {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap" style="padding-top:0;padding-bottom:0;">
+      <h1>Admin - Feijoada da Dedê</h1>
+      <p style="margin:4px 0 0;color:#fed7aa;">Cardápio, itens esgotados e pedidos para impressão</p>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="card" id="loginBox">
+      <h2>Entrar</h2>
+      <label>Senha do admin</label>
+      <input id="senha" type="password" placeholder="Digite a senha" />
+      <button class="primary" style="margin-top:12px;" onclick="login()">Entrar</button>
+      <div id="loginMsg"></div>
+    </section>
+
+    <section id="adminBox" class="hidden">
+      <div class="tabs">
+        <button class="primary" onclick="mostrarAba('pedidos')">📦 Pedidos</button>
+        <button class="gray" onclick="mostrarAba('cardapio')">🍲 Cardápio</button>
+        <button class="gray" onclick="mostrarAba('manual')">📝 Pedido manual</button>
+        <button class="blue" onclick="carregarPedidos()">Atualizar pedidos</button>
+        <button class="green" onclick="criarPedidoTeste()">Criar pedido teste</button>
+      </div>
+
+      <section id="abaPedidos">
+        <div class="card">
+          <h2 style="margin-top:0;">Pedidos recebidos</h2>
+          <p style="color:#6b7280;font-size:14px;">A aba Ativos mostra somente pedidos novos e em preparo. Quando marcar como pronto, entregue ou cancelado, o pedido sai da tela principal e vai para a aba correspondente.</p>
+        </div>
+
+        <div class="subtabs">
+          <button id="filtro-ativos" class="active" onclick="mudarFiltroPedidos('ativos')">🔥 Ativos</button>
+          <button id="filtro-pronto" onclick="mudarFiltroPedidos('pronto')">✅ Prontos</button>
+          <button id="filtro-entregue" onclick="mudarFiltroPedidos('entregue')">📦 Entregues</button>
+          <button id="filtro-cancelado" onclick="mudarFiltroPedidos('cancelado')">❌ Cancelados</button>
+          <button id="filtro-todos" onclick="mudarFiltroPedidos('todos')">📋 Todos</button>
+        </div>
+
+        <div class="atalho-box">🔊 Novo pedido toca alerta. Aperte <strong>ENTER</strong> para imprimir o pedido mais recente.</div>
+        <div id="pedidosMsg"></div>
+        <div id="listaPedidos"><div class="card"><p style="color:#6b7280;">Carregando pedidos...</p></div></div>
+      </section>
+
+      <section id="abaCardapio" class="hidden">
+        <div class="card">
+          <h2>Adicionar novo item</h2>
+          <div class="grid">
+            <div>
+              <label>Nome</label>
+              <input id="novoNome" placeholder="Ex: Arroz extra" />
+            </div>
+            <div>
+              <label>Preço</label>
+              <input id="novoPreco" placeholder="Ex: 5,00" />
+            </div>
+            <div>
+              <label>Descrição</label>
+              <input id="novaDescricao" placeholder="Ex: Porção extra" />
+            </div>
+          </div>
+          <button class="green" style="margin-top:12px;" onclick="adicionarPrato()">Adicionar item</button>
+          <div id="msg"></div>
+        </div>
+
+        <div class="card">
+          <h2>Cardápio atual</h2>
+          <p style="color:#6b7280;font-size:14px;">Use Disponível/Esgotado para bloquear itens sem apagar do cardápio. O cliente verá a alteração no site.</p>
+        </div>
+        <div id="lista"></div>
+      </section>
+
+      <section id="abaManual" class="hidden">
+        <div class="card">
+          <h2>📝 Pedido manual</h2>
+          <p style="color:#6b7280;font-size:14px;">Use quando o cliente pedir pessoalmente, por telefone ou fora do site. O pedido entra direto na aba Ativos.</p>
+
+          <div class="grid">
+            <div>
+              <label>Nome do cliente</label>
+              <input id="manualNome" placeholder="Ex: João" />
+            </div>
+            <div>
+              <label>Bloco</label>
+              <input id="manualBloco" placeholder="Ex: A" />
+            </div>
+            <div>
+              <label>Apartamento / referência</label>
+              <input id="manualApartamento" placeholder="Ex: 101 ou Portaria" />
+            </div>
+          </div>
+
+          <div style="margin-top:12px;">
+            <label>Observação</label>
+            <textarea id="manualObservacao" placeholder="Ex: sem pimenta, entregar na portaria..."></textarea>
+          </div>
+
+          <div style="margin-top:12px;">
+            <label>Pagamento</label>
+            <select id="manualPagamento">
+              <option value="Dinheiro">Dinheiro</option>
+              <option value="Cartão na entrega">Cartão na entrega</option>
+              <option value="Pix">Pix já pago/manual</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Itens do pedido</h2>
+          <div id="manualItens"></div>
+          <div style="margin-top:14px;font-size:20px;font-weight:900;color:#7c2d12;">
+            Total: <span id="manualTotal">R$ 0,00</span>
+          </div>
+          <button class="green" style="margin-top:14px;" onclick="salvarPedidoManualAdmin()">Salvar pedido manual</button>
+          <div id="manualMsg"></div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <div id="printArea" style="display:none;"></div>
+
+  <script>
+    let senhaAdmin = localStorage.getItem("adminSenhaFeijoada") || "";
+    let cardapio = [];
+    let pedidos = [];
+    let filtroPedidos = "ativos";
+    let ultimoTotalPedidos = 0;
+    let ultimoPedidoId = null;
+    let pedidoMaisRecenteId = null;
+    let intervaloPedidos = null;
+
+    function dinheiroParaNumero(valor) {
+      return Number(String(valor).replace("R$", "").replace(".", "").replace(",", ".").trim());
+    }
+
+    function moeda(valor) {
+      return Number(valor || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    }
+
+    function dataBR(iso) {
+      try {
+        return new Date(iso).toLocaleString("pt-BR");
+      } catch {
+        return iso || "";
+      }
+    }
+
+    function mostrarMsg(texto, tipo = "success") {
+      document.getElementById("msg").innerHTML = `<div class="${tipo}">${texto}</div>`;
+      setTimeout(() => document.getElementById("msg").innerHTML = "", 2500);
+    }
+
+    async function login() {
+      const senha = document.getElementById("senha").value.trim();
+
+      const resposta = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ senha })
+      });
+
+      if (!resposta.ok) {
+        document.getElementById("loginMsg").innerHTML = `<div class="error">Senha inválida.</div>`;
+        return;
+      }
+
+      senhaAdmin = senha;
+      localStorage.setItem("adminSenhaFeijoada", senha);
+      document.getElementById("loginBox").classList.add("hidden");
+      document.getElementById("adminBox").classList.remove("hidden");
+      await carregarCardapio();
+      await carregarPedidos();
+      iniciarAtualizacaoAutomatica();
+    }
+
+    function mostrarAba(aba) {
+      document.getElementById("abaPedidos").classList.toggle("hidden", aba !== "pedidos");
+      document.getElementById("abaCardapio").classList.toggle("hidden", aba !== "cardapio");
+      document.getElementById("abaManual").classList.toggle("hidden", aba !== "manual");
+
+      if (aba === "manual") {
+        renderizarPedidoManual();
+      }
+    }
+
+    function iniciarAtualizacaoAutomatica() {
+      if (intervaloPedidos) clearInterval(intervaloPedidos);
+      intervaloPedidos = setInterval(carregarPedidos, 8000);
+    }
+
+    async function carregarPedidos() {
+      const lista = document.getElementById("listaPedidos");
+      const msg = document.getElementById("pedidosMsg");
+
+      try {
+        msg.innerHTML = "";
+        const resposta = await fetch("/api/admin/pedidos", {
+          headers: { "X-Admin-Senha": senhaAdmin }
+        });
+
+        const texto = await resposta.text();
+        let dados = [];
+        try {
+          dados = texto ? JSON.parse(texto) : [];
+        } catch {
+          throw new Error("Resposta inválida do servidor: " + texto.slice(0, 120));
+        }
+
+        if (!resposta.ok) {
+          throw new Error(dados.erro || "Não foi possível carregar pedidos.");
+        }
+
+        const novosPedidos = Array.isArray(dados) ? dados : [];
+
+        const novoMaisRecente = novosPedidos[0]?.id || null;
+
+        if (ultimoTotalPedidos && novosPedidos.length > ultimoTotalPedidos) {
+          ultimoPedidoId = novoMaisRecente;
+          pedidoMaisRecenteId = novoMaisRecente;
+          tocarAlerta();
+        }
+
+        if (!pedidoMaisRecenteId && novoMaisRecente) {
+          pedidoMaisRecenteId = novoMaisRecente;
+        }
+
+        ultimoTotalPedidos = novosPedidos.length;
+        pedidos = novosPedidos;
+        renderizarPedidos();
+      } catch (erro) {
+        console.error("Erro ao carregar pedidos:", erro);
+        lista.innerHTML = `<div class="error"><strong>Erro ao carregar pedidos:</strong> ${escapeHtml(erro.message)}</div>`;
+      }
+    }
+
+    function tocarAlerta() {
+      try {
+        const contexto = new (window.AudioContext || window.webkitAudioContext)();
+        const oscilador = contexto.createOscillator();
+        const ganho = contexto.createGain();
+
+        oscilador.type = "sine";
+        oscilador.frequency.setValueAtTime(880, contexto.currentTime);
+        ganho.gain.setValueAtTime(0.15, contexto.currentTime);
+
+        oscilador.connect(ganho);
+        ganho.connect(contexto.destination);
+
+        oscilador.start();
+        oscilador.stop(contexto.currentTime + 0.25);
+
+        setTimeout(() => {
+          const oscilador2 = contexto.createOscillator();
+          const ganho2 = contexto.createGain();
+          oscilador2.type = "sine";
+          oscilador2.frequency.setValueAtTime(1100, contexto.currentTime);
+          ganho2.gain.setValueAtTime(0.15, contexto.currentTime);
+          oscilador2.connect(ganho2);
+          ganho2.connect(contexto.destination);
+          oscilador2.start();
+          oscilador2.stop(contexto.currentTime + 0.25);
+        }, 300);
+      } catch {}
+    }
+
+    function mudarFiltroPedidos(filtro) {
+      filtroPedidos = filtro;
+      ["ativos", "pronto", "entregue", "cancelado", "todos"].forEach(nome => {
+        const botao = document.getElementById(`filtro-${nome}`);
+        if (botao) botao.classList.toggle("active", nome === filtro);
+      });
+      renderizarPedidos();
+    }
+
+    function filtrarPedidos() {
+      if (filtroPedidos === "ativos") {
+        return pedidos.filter(p => ["novo", "em_preparo"].includes(p.statusPedido || "novo"));
+      }
+
+      if (filtroPedidos === "todos") {
+        return pedidos;
+      }
+
+      return pedidos.filter(p => (p.statusPedido || "novo") === filtroPedidos);
+    }
+
+    function nomeFiltroAtual() {
+      const nomes = {
+        ativos: "ativos",
+        pronto: "prontos",
+        entregue: "entregues",
+        cancelado: "cancelados",
+        todos: "recebidos"
+      };
+      return nomes[filtroPedidos] || "recebidos";
+    }
+
+    function renderizarPedidos() {
+      const lista = document.getElementById("listaPedidos");
+      const pedidosFiltrados = filtrarPedidos();
+
+      if (!pedidosFiltrados.length) {
+        lista.innerHTML = `<div class="card"><p style="color:#6b7280;">Nenhum pedido ${nomeFiltroAtual()} no momento.</p></div>`;
+        return;
+      }
+
+      lista.innerHTML = pedidosFiltrados.map(pedido => `
+        <div class="card ${pedido.id === ultimoPedidoId ? "pedido-novo" : ""}">
+          <div class="pedido-head">
+            <div>
+              <strong style="font-size:18px;">${escapeHtml(pedido.cliente.nome)}</strong>
+              <div style="margin-top:5px;color:#6b7280;">
+                Bloco: ${escapeHtml(pedido.cliente.bloco || "Não informado")} · Ap: ${escapeHtml(pedido.cliente.apartamento)}
+              </div>
+              <div style="margin-top:5px;color:#6b7280;">${dataBR(pedido.criadoEm)}</div>
+            </div>
+            <div style="text-align:right;">
+              <span class="badge">${escapeHtml(formatarStatusPedido(pedido.statusPedido))}</span>
+              <div class="total" style="margin-top:8px;">${moeda(pedido.total)}</div>
+            </div>
+          </div>
+
+          <ul class="pedido-itens">
+            ${pedido.itens.map(item => `<li>${item.quantidade}x ${escapeHtml(item.nome)} — ${moeda(item.subtotal)}</li>`).join("")}
+          </ul>
+
+          <p><strong>Pagamento:</strong> ${escapeHtml(pedido.pagamento)} · <strong>${escapeHtml(formatarStatusPagamento(pedido.statusPagamento))}</strong></p>
+          <p><strong>Observação:</strong> ${escapeHtml(pedido.cliente.observacao || "Nenhuma")}</p>
+
+          <div class="actions">
+            <button class="primary" onclick="imprimirPedido('${pedido.id}')">🖨️ Imprimir pedido</button>
+            ${pedido.statusPedido !== "em_preparo" ? `<button class="gray" onclick="alterarStatusPedido('${pedido.id}', 'em_preparo')">Em preparo</button>` : ""}
+            ${pedido.statusPedido !== "pronto" ? `<button class="green" onclick="alterarStatusPedido('${pedido.id}', 'pronto')">Pronto</button>` : ""}
+            ${pedido.statusPedido !== "entregue" ? `<button class="blue" onclick="alterarStatusPedido('${pedido.id}', 'entregue')">Entregue</button>` : ""}
+            ${pedido.statusPedido !== "cancelado" ? `<button class="red" onclick="alterarStatusPedido('${pedido.id}', 'cancelado')">Cancelar</button>` : ""}
+            ${!["novo", "em_preparo"].includes(pedido.statusPedido || "novo") ? `<button class="gray" onclick="alterarStatusPedido('${pedido.id}', 'novo')">Voltar para ativos</button>` : ""}
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function formatarStatusPagamento(status) {
+      const mapa = {
+        aguardando_pix: "AGUARDANDO PIX",
+        pago_via_pix: "PAGO VIA PIX",
+        pagamento_na_entrega: "PAGAMENTO NA ENTREGA",
+        pix_manual: "PIX MANUAL"
+      };
+      return mapa[status] || status || "";
+    }
+
+    function formatarStatusPedido(status) {
+      const mapa = {
+        novo: "NOVO",
+        em_preparo: "EM PREPARO",
+        pronto: "PRONTO",
+        entregue: "ENTREGUE",
+        cancelado: "CANCELADO"
+      };
+      return mapa[status] || status || "NOVO";
+    }
+
+    async function alterarStatusPedido(id, statusPedido) {
+      const resposta = await fetch(`/api/admin/pedidos/${id}/status`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Admin-Senha": senhaAdmin
+        },
+        body: JSON.stringify({ statusPedido })
+      });
+
+      if (!resposta.ok) {
+        alert("Não foi possível alterar o status.");
+        return;
+      }
+
+      await carregarPedidos();
+    }
+
+    function imprimirPedido(id) {
+      const pedido = pedidos.find(p => p.id === id);
+      if (!pedido) return;
+
+      if (ultimoPedidoId === id) {
+        ultimoPedidoId = null;
+        renderizarPedidos();
+      }
+
+      const itensHtml = pedido.itens.map(item => `
+        <div style="margin:5px 0 6px;">
+          <div style="font-size:13px;font-weight:900;text-transform:uppercase;word-break:break-word;">
+            ${item.quantidade}x ${escapeHtml(item.nome)}
+          </div>
+          <div style="font-size:10px;">
+            ${moeda(item.preco)} un. / Subtotal: ${moeda(item.subtotal)}
+          </div>
+        </div>
+      `).join("");
+
+      const conteudo = `
+        <div class="cupom">
+          <div style="text-align:center;">
+            <div style="font-size:14px;font-weight:900;text-transform:uppercase;">FEIJOADA DA DEDÊ</div>
+            <div style="font-size:10px;margin-top:2px;">CUPOM DE COZINHA</div>
+          </div>
+
+          <div style="border-top:1px dashed #000;margin:6px 0;"></div>
+
+          <div style="font-size:10px;">
+            <div><strong>DATA:</strong> ${dataBR(pedido.criadoEm)}</div>
+            <div><strong>PEDIDO:</strong> ${escapeHtml(String(pedido.id || "").slice(0, 8).toUpperCase())}</div>
+            <div><strong>STATUS:</strong> ${escapeHtml(formatarStatusPedido(pedido.statusPedido))}</div>
+          </div>
+
+          <div style="border-top:1px dashed #000;margin:6px 0;"></div>
+
+          <div style="font-size:11px;">
+            <div><strong>CLIENTE:</strong> ${escapeHtml(pedido.cliente.nome)}</div>
+            <div><strong>BLOCO:</strong> ${escapeHtml(pedido.cliente.bloco || "N/I")}</div>
+            <div><strong>APTO:</strong> ${escapeHtml(pedido.cliente.apartamento)}</div>
+          </div>
+
+          <div style="border-top:1px dashed #000;margin:6px 0;"></div>
+
+          <div>${itensHtml}</div>
+
+          <div style="border-top:1px dashed #000;margin:6px 0;"></div>
+
+          <div>
+            <span style="font-size:13px;font-weight:900;">TOTAL:</span>
+            <span style="font-size:16px;font-weight:900;">${moeda(pedido.total)}</span>
+          </div>
+
+          <div style="border-top:1px dashed #000;margin:6px 0;"></div>
+
+          <div style="font-size:10px;">
+            <div><strong>PAGTO:</strong> ${escapeHtml(pedido.pagamento)}</div>
+            <div><strong>STATUS PAGTO:</strong> ${escapeHtml(formatarStatusPagamento(pedido.statusPagamento))}</div>
+          </div>
+
+          <div style="border-top:1px dashed #000;margin:6px 0;"></div>
+
+          <div style="font-size:10px;word-break:break-word;">
+            <strong>OBS:</strong><br>
+            <span>${escapeHtml(pedido.cliente.observacao || "Nenhuma")}</span>
+          </div>
+
+          <div style="border-top:1px dashed #000;margin:6px 0;"></div>
+
+          <div style="text-align:center;font-size:10px;">*** BOM PREPARO ***</div>
+        </div>
+      `;
+
+      const printArea = document.getElementById("printArea");
+      printArea.innerHTML = conteudo;
+      printArea.style.display = "block";
+
+      setTimeout(() => {
+        window.print();
+        setTimeout(() => {
+          printArea.style.display = "none";
+          printArea.innerHTML = "";
+        }, 700);
+      }, 100);
+    }
+
+    async function criarPedidoTeste() {
+      try {
+        const resposta = await fetch("/api/admin/pedidos/teste", {
+          method: "POST",
+          headers: { "X-Admin-Senha": senhaAdmin }
+        });
+
+        const dados = await resposta.json();
+
+        if (!resposta.ok) {
+          throw new Error(dados.erro || "Não foi possível criar pedido teste.");
+        }
+
+        document.getElementById("pedidosMsg").innerHTML = `<div class="success">Pedido teste criado. Se ele apareceu abaixo, o painel está funcionando.</div>`;
+        await carregarPedidos();
+      } catch (erro) {
+        document.getElementById("pedidosMsg").innerHTML = `<div class="error"><strong>Erro no pedido teste:</strong> ${escapeHtml(erro.message)}</div>`;
+      }
+    }
+
+    async function carregarCardapio() {
+      const resposta = await fetch("/api/cardapio");
+      cardapio = await resposta.json();
+      renderizarLista();
+    }
+
+    function renderizarLista() {
+      const lista = document.getElementById("lista");
+
+      lista.innerHTML = cardapio.map(prato => `
+        <div class="card">
+          <div class="item-top">
+            <strong>${escapeHtml(prato.nome)}</strong>
+            <span class="${prato.disponivel ? "status-on" : "status-off"}">${prato.disponivel ? "DISPONÍVEL" : "ESGOTADO"}</span>
+          </div>
+
+          <div class="grid">
+            <div>
+              <label>Nome</label>
+              <input id="nome-${prato.id}" value="${escapeHtml(prato.nome)}" />
+            </div>
+            <div>
+              <label>Preço</label>
+              <input id="preco-${prato.id}" value="${Number(prato.preco).toFixed(2).replace(".", ",")}" />
+            </div>
+            <div>
+              <label>Descrição</label>
+              <input id="descricao-${prato.id}" value="${escapeHtml(prato.descricao || "")}" />
+            </div>
+          </div>
+
+          <div class="actions">
+            <button class="primary" onclick="salvarPrato(${prato.id})">Salvar alterações</button>
+            <button class="gray" onclick="alternarDisponivel(${prato.id})">${prato.disponivel ? "Marcar ESGOTADO" : "Marcar DISPONÍVEL"}</button>
+            <button class="red" onclick="removerPrato(${prato.id})">Remover</button>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function escapeHtml(texto) {
+      return String(texto ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;");
+    }
+
+    function obterPratoDaTela(id) {
+      const pratoOriginal = cardapio.find(p => Number(p.id) === Number(id));
+      return {
+        id,
+        nome: document.getElementById(`nome-${id}`).value.trim(),
+        preco: dinheiroParaNumero(document.getElementById(`preco-${id}`).value),
+        descricao: document.getElementById(`descricao-${id}`).value.trim(),
+        disponivel: pratoOriginal.disponivel
+      };
+    }
+
+    async function salvarPrato(id) {
+      const prato = obterPratoDaTela(id);
+
+      const resposta = await fetch(`/api/admin/cardapio/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", "X-Admin-Senha": senhaAdmin },
+        body: JSON.stringify(prato)
+      });
+
+      if (!resposta.ok) {
+        const erro = await resposta.json();
+        mostrarMsg(erro.erro || "Erro ao salvar.", "error");
+        return;
+      }
+
+      mostrarMsg("Item atualizado.");
+      await carregarCardapio();
+    }
+
+    async function alternarDisponivel(id) {
+      const prato = cardapio.find(p => Number(p.id) === Number(id));
+      const atualizado = { ...prato, disponivel: !prato.disponivel };
+
+      const resposta = await fetch(`/api/admin/cardapio/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", "X-Admin-Senha": senhaAdmin },
+        body: JSON.stringify(atualizado)
+      });
+
+      if (!resposta.ok) {
+        const erro = await resposta.json();
+        mostrarMsg(erro.erro || "Erro ao alterar disponibilidade.", "error");
+        return;
+      }
+
+      mostrarMsg(atualizado.disponivel ? "Item disponível." : "Item marcado como esgotado.");
+      await carregarCardapio();
+    }
+
+    async function removerPrato(id) {
+      if (!confirm("Tem certeza que deseja remover este item?")) return;
+
+      const resposta = await fetch(`/api/admin/cardapio/${id}`, {
+        method: "DELETE",
+        headers: { "X-Admin-Senha": senhaAdmin }
+      });
+
+      if (!resposta.ok) {
+        const erro = await resposta.json();
+        mostrarMsg(erro.erro || "Erro ao remover.", "error");
+        return;
+      }
+
+      mostrarMsg("Item removido.");
+      await carregarCardapio();
+    }
+
+    async function adicionarPrato() {
+      const nome = document.getElementById("novoNome").value.trim();
+      const preco = dinheiroParaNumero(document.getElementById("novoPreco").value);
+      const descricao = document.getElementById("novaDescricao").value.trim();
+
+      const resposta = await fetch("/api/admin/cardapio", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Admin-Senha": senhaAdmin },
+        body: JSON.stringify({ nome, preco, descricao, disponivel: true })
+      });
+
+      if (!resposta.ok) {
+        const erro = await resposta.json();
+        mostrarMsg(erro.erro || "Erro ao adicionar.", "error");
+        return;
+      }
+
+      document.getElementById("novoNome").value = "";
+      document.getElementById("novoPreco").value = "";
+      document.getElementById("novaDescricao").value = "";
+      mostrarMsg("Item adicionado.");
+      await carregarCardapio();
+    }
+
+
+    const manualCarrinho = {};
+
+    function renderizarPedidoManual() {
+      const container = document.getElementById("manualItens");
+      if (!container) return;
+
+      const itensDisponiveis = cardapio.filter(p => p.disponivel);
+
+      if (!itensDisponiveis.length) {
+        container.innerHTML = `<div class="error">Nenhum item disponível no cardápio.</div>`;
+        atualizarManualTotal();
+        return;
+      }
+
+      container.innerHTML = itensDisponiveis.map(prato => `
+        <div class="card" style="padding:12px;margin-bottom:10px;">
+          <div class="item-top" style="margin-bottom:8px;">
+            <div>
+              <strong>${escapeHtml(prato.nome)}</strong>
+              <div style="color:#6b7280;font-size:13px;">${moeda(prato.preco)}</div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <button class="gray" onclick="alterarQtdManual(${prato.id}, -1)">-</button>
+              <strong id="manualQtd-${prato.id}" style="min-width:24px;text-align:center;">${manualCarrinho[prato.id] || 0}</strong>
+              <button class="green" onclick="alterarQtdManual(${prato.id}, 1)">+</button>
+            </div>
+          </div>
+        </div>
+      `).join("");
+
+      atualizarManualTotal();
+    }
+
+    function alterarQtdManual(id, delta) {
+      manualCarrinho[id] = Math.max(0, (manualCarrinho[id] || 0) + delta);
+      if (manualCarrinho[id] === 0) delete manualCarrinho[id];
+
+      const el = document.getElementById(`manualQtd-${id}`);
+      if (el) el.textContent = manualCarrinho[id] || 0;
+
+      atualizarManualTotal();
+    }
+
+    function obterItensPedidoManual() {
+      return Object.entries(manualCarrinho).map(([id, quantidade]) => {
+        const prato = cardapio.find(p => Number(p.id) === Number(id));
+        return {
+          id: prato.id,
+          nome: prato.nome,
+          quantidade: Number(quantidade),
+          preco: Number(prato.preco),
+          subtotal: Number(prato.preco) * Number(quantidade)
+        };
+      }).filter(item => item.quantidade > 0);
+    }
+
+    function atualizarManualTotal() {
+      const el = document.getElementById("manualTotal");
+      if (!el) return;
+
+      const total = obterItensPedidoManual().reduce((soma, item) => soma + item.subtotal, 0);
+      el.textContent = moeda(total);
+    }
+
+    async function salvarPedidoManualAdmin() {
+      const msg = document.getElementById("manualMsg");
+      const itens = obterItensPedidoManual();
+      const total = itens.reduce((soma, item) => soma + item.subtotal, 0);
+
+      const pedido = {
+        cliente: {
+          nome: document.getElementById("manualNome").value.trim(),
+          bloco: document.getElementById("manualBloco").value.trim(),
+          apartamento: document.getElementById("manualApartamento").value.trim(),
+          observacao: document.getElementById("manualObservacao").value.trim()
+        },
+        pagamento: document.getElementById("manualPagamento").value,
+        total,
+        itens
+      };
+
+      if (!pedido.cliente.nome || !pedido.cliente.apartamento) {
+        msg.innerHTML = `<div class="error">Informe nome e apartamento/referência.</div>`;
+        return;
+      }
+
+      if (!itens.length) {
+        msg.innerHTML = `<div class="error">Adicione pelo menos um item ao pedido.</div>`;
+        return;
+      }
+
+      try {
+        const resposta = await fetch("/api/admin/pedidos/manual", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Admin-Senha": senhaAdmin
+          },
+          body: JSON.stringify(pedido)
+        });
+
+        const dados = await resposta.json();
+
+        if (!resposta.ok) {
+          throw new Error(dados.erro || dados.detalhe || "Não foi possível salvar o pedido.");
+        }
+
+        msg.innerHTML = `<div class="success">Pedido manual salvo com sucesso.</div>`;
+
+        document.getElementById("manualNome").value = "";
+        document.getElementById("manualBloco").value = "";
+        document.getElementById("manualApartamento").value = "";
+        document.getElementById("manualObservacao").value = "";
+        document.getElementById("manualPagamento").value = "Dinheiro";
+
+        Object.keys(manualCarrinho).forEach(k => delete manualCarrinho[k]);
+
+        await carregarPedidos();
+        renderizarPedidoManual();
+        mostrarAba("pedidos");
+      } catch (erro) {
+        msg.innerHTML = `<div class="error"><strong>Erro:</strong> ${escapeHtml(erro.message)}</div>`;
+      }
+    }
+
+
+    document.addEventListener("keydown", function(e) {
+      if (e.key === "Enter" && !document.getElementById("adminBox").classList.contains("hidden")) {
+        const pedidosFiltrados = filtrarPedidos();
+        const pedidoParaImprimir = pedidosFiltrados[0] || pedidos[0];
+
+        if (pedidoParaImprimir) {
+          e.preventDefault();
+          imprimirPedido(pedidoParaImprimir.id);
+        }
+      }
+    });
+
+    if (senhaAdmin) {
+      document.getElementById("senha").value = senhaAdmin;
+    }
+  </script>
+</body>
+</html>

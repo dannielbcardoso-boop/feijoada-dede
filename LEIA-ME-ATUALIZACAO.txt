@@ -1,0 +1,16 @@
+VERSÃO COMPLETA CORRIGIDA
+
+Incluído:
+1. Aba Pedido manual no admin.
+2. Pedido manual com nome, bloco, apartamento, observação, pagamento e itens do cardápio.
+3. Pedido manual entra na aba Ativos.
+4. Cardápio mantém botão para marcar ESGOTADO/DISPONÍVEL sem apagar.
+5. Mantém impressão térmica ajustada.
+6. Mantém webhook Pix corrigido da versão base.
+
+Como subir:
+git add .
+git commit -m "pedido manual e cardapio esgotado"
+git push
+
+Depois faça Redeploy no Railway se não subir automático.

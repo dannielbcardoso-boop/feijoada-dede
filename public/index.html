@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Feijoada da Dedê</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Arial, Helvetica, sans-serif; background: #fff7ed; color: #1f2937; }
+    header { background: #431407; color: white; padding: 18px 16px; position: sticky; top: 0; z-index: 10; box-shadow: 0 3px 10px rgba(0,0,0,.18); }
+    .wrap { max-width: 980px; margin: 0 auto; }
+    .header-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    h1 { margin: 0; font-size: 24px; }
+    .subtitle { margin: 4px 0 0; color: #fed7aa; font-size: 14px; }
+    .cart-pill { background: rgba(255,255,255,.12); border-radius: 999px; padding: 9px 12px; font-weight: bold; white-space: nowrap; }
+    main { max-width: 980px; margin: 0 auto; padding: 16px; display: grid; grid-template-columns: 1.35fr .9fr; gap: 18px; }
+    .card { background: white; border-radius: 22px; padding: 18px; box-shadow: 0 2px 8px rgba(0,0,0,.07); margin-bottom: 14px; }
+    .menu-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .item { background: white; border-radius: 22px; padding: 18px; box-shadow: 0 2px 8px rgba(0,0,0,.07); min-height: 150px; display: flex; flex-direction: column; justify-content: space-between; position: relative; }
+    .item.esgotado { opacity: .58; }
+    .tag-esgotado { position: absolute; right: 14px; top: 14px; background: #fee2e2; color: #991b1b; border-radius: 999px; padding: 6px 10px; font-size: 12px; font-weight: 900; }
+    .item h3 { margin: 0 0 6px; font-size: 18px; padding-right: 90px; }
+    .item p { margin: 0; color: #6b7280; font-size: 14px; }
+    .price { color: #7c2d12; font-size: 22px; font-weight: 900; }
+    .item-bottom { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 18px; }
+    .qty { display: flex; align-items: center; gap: 8px; }
+    .qty button { border: 0; border-radius: 999px; width: 38px; height: 38px; font-size: 22px; font-weight: bold; cursor: pointer; }
+    .qty button:disabled { opacity: .45; cursor: not-allowed; }
+    .minus { background: #f3f4f6; color: #111827; }
+    .plus { background: #9a3412; color: white; }
+    .qty span { width: 24px; text-align: center; font-weight: bold; font-size: 17px; }
+    label { display: block; margin: 0 0 6px; font-size: 13px; font-weight: bold; color: #374151; }
+    input, textarea { width: 100%; border: 1px solid #e5e7eb; border-radius: 15px; padding: 13px; font-size: 16px; outline: none; background: white; }
+    input:focus, textarea:focus { border-color: #9a3412; }
+    textarea { min-height: 88px; resize: vertical; }
+    .field { margin-bottom: 12px; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .pay-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 9px; }
+    .pay-btn { border: 1px solid #e5e7eb; background: white; border-radius: 15px; padding: 12px 8px; font-weight: bold; cursor: pointer; font-size: 14px; }
+    .pay-btn.active { background: #9a3412; color: white; border-color: #9a3412; }
+    .pix-box { margin-top: 12px; background: #ffedd5; border-radius: 16px; padding: 13px; font-size: 14px; }
+    .pix-code { margin-top: 10px; background: white; border-radius: 12px; padding: 10px; word-break: break-all; font-size: 11px; color: #374151; max-height: 100px; overflow: auto; }
+    .copy-btn { margin-top: 9px; border: 0; background: white; color: #7c2d12; padding: 10px 12px; border-radius: 12px; font-weight: bold; cursor: pointer; }
+    .order-line { border-bottom: 1px solid #f3f4f6; padding: 9px 0; display: flex; justify-content: space-between; gap: 8px; font-size: 14px; }
+    .total { display: flex; justify-content: space-between; margin-top: 14px; font-size: 20px; font-weight: 900; }
+    .action { width: 100%; border: 0; border-radius: 22px; background: #16a34a; color: white; padding: 17px; font-size: 18px; font-weight: 900; cursor: pointer; box-shadow: 0 4px 12px rgba(22,163,74,.25); }
+    .action[disabled] { background: #9ca3af; cursor: not-allowed; box-shadow: none; }
+    .small { color: #6b7280; font-size: 13px; line-height: 1.4; }
+    .alert { background: #fef3c7; color: #78350f; border-radius: 16px; padding: 12px; margin-top: 12px; font-size: 13px; line-height: 1.4; }
+    .success { background: #dcfce7; color: #166534; border-radius: 16px; padding: 12px; margin-top: 12px; font-size: 13px; line-height: 1.4; }
+    .error { background: #fee2e2; color: #991b1b; border-radius: 16px; padding: 12px; margin-top: 12px; font-size: 13px; line-height: 1.4; }
+    .qr { display: block; width: 220px; height: 220px; margin: 12px auto 0; background: white; border-radius: 16px; padding: 10px; }
+    @media (max-width: 760px) {
+      header { padding: 14px 12px; } h1 { font-size: 21px; } main { display: block; padding: 12px; }
+      .menu-grid { grid-template-columns: 1fr; } .card, .item { border-radius: 18px; padding: 15px; }
+      .header-row { align-items: flex-start; } .cart-pill { font-size: 13px; padding: 8px 10px; }
+      .price { font-size: 20px; } aside { margin-top: 14px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap header-row">
+      <div>
+        <h1>Feijoada da Dedê</h1>
+        <p class="subtitle">Pedidos internos pelo WhatsApp</p>
+      </div>
+      <div class="cart-pill">🛒 <span id="cartCount">0</span> itens</div>
+    </div>
+  </header>
+
+  <main>
+    <section>
+      <div class="card">
+        <h2 style="margin:0 0 6px;">🍲 Cardápio</h2>
+        <p class="small" style="margin:0;">No Pix, o pedido só abre no WhatsApp depois da confirmação do pagamento.</p>
+      </div>
+      <div class="menu-grid" id="menu"></div>
+    </section>
+
+    <aside>
+      <section class="card">
+        <h2 style="margin-top:0;">Seu pedido</h2>
+        <div id="orderList"><p class="small">Nenhum item adicionado ainda.</p></div>
+        <div class="total"><span>Total</span><span id="total">R$ 0,00</span></div>
+      </section>
+
+      <section class="card">
+        <h2 style="margin-top:0;">Dados da entrega</h2>
+        <div class="field"><label>Seu nome</label><input id="nome" placeholder="Ex: João" /></div>
+        <div class="row">
+          <div class="field"><label>Bloco</label><input id="bloco" placeholder="Ex: A" /></div>
+          <div class="field"><label>Apartamento</label><input id="apartamento" placeholder="Ex: 302" /></div>
+        </div>
+        <div class="field"><label>Observação</label><textarea id="observacao" placeholder="Ex: sem pimenta, entregar na portaria..."></textarea></div>
+      </section>
+
+      <section class="card">
+        <h2 style="margin-top:0;">Pagamento</h2>
+        <div class="pay-grid">
+          <button class="pay-btn active" data-pay="Pix">Pix</button>
+          <button class="pay-btn" data-pay="Dinheiro">Dinheiro</button>
+          <button class="pay-btn" data-pay="Cartão na entrega">Cartão na entrega</button>
+        </div>
+
+        <div class="pix-box" id="pixBox">
+          <strong>Pix automático</strong>
+          <div class="small" style="margin-top:5px;">O sistema gera um QR Code do Mercado Pago e libera o WhatsApp somente após o pagamento aprovado.</div>
+          <strong style="display:block;margin-top:8px;">Valor: <span id="pixValor">R$ 0,00</span></strong>
+          <div id="pixArea"></div>
+        </div>
+      </section>
+
+      <button class="action" id="btnFinalizar" onclick="finalizarPedido()">🔐 Gerar Pix e enviar após pagamento</button>
+    </aside>
+  </main>
+
+  <script>
+    const WHATSAPP_NUMERO = "5591982631078";
+    const NOME_LOJA = "Feijoada da Dedê";
+
+    let pratos = [];
+    const carrinho = {};
+    let pagamento = "Pix";
+    let pixAtual = null;
+    let intervaloStatus = null;
+
+    function moeda(valor) {
+      return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    }
+
+    async function carregarCardapio() {
+      try {
+        const resposta = await fetch("/api/cardapio");
+        pratos = await resposta.json();
+        renderizarMenu();
+        atualizarTela();
+      } catch {
+        document.getElementById("menu").innerHTML = `<div class="error">Não foi possível carregar o cardápio.</div>`;
+      }
+    }
+
+    function renderizarMenu() {
+      const menu = document.getElementById("menu");
+      menu.innerHTML = pratos.map(prato => `
+        <div class="item ${prato.disponivel ? "" : "esgotado"}">
+          ${prato.disponivel ? "" : `<div class="tag-esgotado">ESGOTADO</div>`}
+          <div><h3>${prato.nome}</h3><p>${prato.descricao || ""}</p></div>
+          <div class="item-bottom">
+            <div class="price">${moeda(Number(prato.preco))}</div>
+            <div class="qty">
+              <button class="minus" onclick="remover(${prato.id})" ${prato.disponivel ? "" : "disabled"}>−</button>
+              <span id="qtd-${prato.id}">0</span>
+              <button class="plus" onclick="adicionar(${prato.id})" ${prato.disponivel ? "" : "disabled"}>+</button>
+            </div>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function resetarPix() {
+      pixAtual = null;
+      if (intervaloStatus) clearInterval(intervaloStatus);
+      intervaloStatus = null;
+      document.getElementById("pixArea").innerHTML = "";
+      atualizarBotao();
+    }
+
+    function adicionar(id) {
+      const prato = pratos.find(p => Number(p.id) === Number(id));
+      if (!prato || !prato.disponivel) {
+        alert("Este item está esgotado.");
+        return;
+      }
+      carrinho[id] = (carrinho[id] || 0) + 1;
+      resetarPix();
+      atualizarTela();
+    }
+
+    function remover(id) {
+      carrinho[id] = Math.max(0, (carrinho[id] || 0) - 1);
+      if (carrinho[id] === 0) delete carrinho[id];
+      resetarPix();
+      atualizarTela();
+    }
+
+    function obterItens() {
+      return Object.entries(carrinho).map(([id, qtd]) => {
+        const prato = pratos.find(p => Number(p.id) === Number(id));
+        return { ...prato, quantidade: qtd, subtotal: Number(prato.preco) * qtd };
+      }).filter(item => item && item.disponivel);
+    }
+
+    function obterTotal() {
+      return obterItens().reduce((soma, item) => soma + item.subtotal, 0);
+    }
+
+    function atualizarTela() {
+      pratos.forEach(prato => {
+        const el = document.getElementById(`qtd-${prato.id}`);
+        if (el) el.textContent = carrinho[prato.id] || 0;
+      });
+
+      const itens = obterItens();
+      document.getElementById("cartCount").textContent = itens.reduce((soma, item) => soma + item.quantidade, 0);
+
+      const orderList = document.getElementById("orderList");
+      if (itens.length === 0) {
+        orderList.innerHTML = `<p class="small">Nenhum item adicionado ainda.</p>`;
+      } else {
+        orderList.innerHTML = itens.map(item => `
+          <div class="order-line"><span>${item.quantidade}x ${item.nome}</span><strong>${moeda(item.subtotal)}</strong></div>
+        `).join("");
+      }
+
+      const total = obterTotal();
+      document.getElementById("total").textContent = moeda(total);
+      document.getElementById("pixValor").textContent = moeda(total);
+    }
+
+    function atualizarBotao(texto, desabilitado = false) {
+      const btn = document.getElementById("btnFinalizar");
+      btn.disabled = desabilitado;
+      btn.textContent = texto || (pagamento === "Pix" ? "🔐 Gerar Pix e enviar após pagamento" : "📲 Enviar pedido no WhatsApp");
+    }
+
+    document.querySelectorAll(".pay-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        pagamento = btn.dataset.pay;
+        document.querySelectorAll(".pay-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        document.getElementById("pixBox").style.display = pagamento === "Pix" ? "block" : "none";
+        resetarPix();
+        atualizarBotao();
+      });
+    });
+
+    function dadosPedido() {
+      return {
+        cliente: {
+          nome: document.getElementById("nome").value.trim(),
+          bloco: document.getElementById("bloco").value.trim(),
+          apartamento: document.getElementById("apartamento").value.trim(),
+          observacao: document.getElementById("observacao").value.trim()
+        },
+        pagamento,
+        total: obterTotal(),
+        itens: obterItens().map(item => ({
+          id: item.id,
+          nome: item.nome,
+          quantidade: item.quantidade,
+          preco: Number(item.preco),
+          subtotal: item.subtotal
+        }))
+      };
+    }
+
+    function validarPedido(pedido) {
+      if (pedido.itens.length === 0) return "Adicione pelo menos um item disponível ao pedido.";
+      if (!pedido.cliente.nome || !pedido.cliente.apartamento) return "Informe seu nome e apartamento.";
+      return "";
+    }
+
+    async function salvarPedidoManual() {
+      const resposta = await fetch("/api/pedidos/na-entrega", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(dadosPedido())
+      });
+
+      if (!resposta.ok) {
+        const dados = await resposta.json().catch(() => ({}));
+        throw new Error(dados.erro || dados.detalhe || "Pedido não foi salvo no painel.");
+      }
+
+      return resposta.json();
+    }
+
+    function montarMensagemPedido(statusPagamento) {
+      const pedido = dadosPedido();
+      const lista = pedido.itens.map(item => `• ${item.quantidade}x ${item.nome} - ${moeda(item.subtotal)}`).join("\n");
+
+      return `Olá! Quero fazer um pedido no ${NOME_LOJA}.
+
+${lista}
+
+Total: ${moeda(pedido.total)}
+Pagamento: ${pedido.pagamento}
+Status do pagamento: ${statusPagamento}
+
+Nome: ${pedido.cliente.nome}
+Bloco: ${pedido.cliente.bloco || "Não informado"}
+Apartamento: ${pedido.cliente.apartamento}
+Observação: ${pedido.cliente.observacao || "Nenhuma"}`;
+    }
+
+    function abrirWhatsApp(statusPagamento) {
+      const mensagem = montarMensagemPedido(statusPagamento);
+      const link = `https://wa.me/${WHATSAPP_NUMERO}?text=${encodeURIComponent(mensagem)}`;
+      window.location.href = link;
+    }
+
+    async function finalizarPedido() {
+      await carregarCardapio();
+      const pedido = dadosPedido();
+      const erro = validarPedido(pedido);
+      if (erro) {
+        alert(erro);
+        return;
+      }
+
+      if (pagamento !== "Pix") {
+        try {
+          await salvarPedidoManual();
+          abrirWhatsApp("PAGAMENTO NA ENTREGA");
+        } catch (erro) {
+          alert("O pedido não foi salvo no painel. Tente novamente. Erro: " + erro.message);
+        }
+        return;
+      }
+
+      await criarPix(pedido);
+    }
+
+    async function criarPix(pedido) {
+      try {
+        atualizarBotao("Gerando Pix...", true);
+        document.getElementById("pixArea").innerHTML = `<div class="alert">Gerando Pix seguro pelo Mercado Pago...</div>`;
+
+        const resposta = await fetch("/api/criar-pix", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(pedido)
+        });
+
+        const dados = await resposta.json();
+        if (!resposta.ok) throw new Error(dados.detalhe || dados.erro || "Erro ao criar Pix.");
+
+        pixAtual = dados;
+
+        document.getElementById("pixArea").innerHTML = `
+          ${dados.qrCodeBase64 ? `<img class="qr" src="data:image/png;base64,${dados.qrCodeBase64}" alt="QR Code Pix" />` : ""}
+          <div class="pix-code">${dados.copiaECola}</div>
+          <button class="copy-btn" onclick="copiarPix()">📋 Copiar Pix copia e cola</button>
+          ${dados.ticketUrl ? `<p class="small" style="margin-top:8px;"><a href="${dados.ticketUrl}" target="_blank" rel="noopener">Abrir página de pagamento</a></p>` : ""}
+          <div class="alert">Aguardando pagamento. Assim que aprovar, o pedido será liberado no WhatsApp.</div>
+        `;
+
+        atualizarBotao("Aguardando pagamento...", true);
+        consultarStatusAteAprovar(dados.paymentId || dados.pedidoId);
+      } catch (erro) {
+        document.getElementById("pixArea").innerHTML = `<div class="error"><strong>Erro:</strong> ${erro.message}</div>`;
+        atualizarBotao();
+      }
+    }
+
+    function consultarStatusAteAprovar(paymentId) {
+      if (intervaloStatus) clearInterval(intervaloStatus);
+
+      intervaloStatus = setInterval(async () => {
+        try {
+          const resposta = await fetch(`/api/pedidos/${paymentId}/status`);
+          const dados = await resposta.json();
+
+          if (dados.pago || dados.status === "approved") {
+            clearInterval(intervaloStatus);
+            intervaloStatus = null;
+            document.getElementById("pixArea").innerHTML += `<div class="success"><strong>Pagamento aprovado!</strong> Salvando pedido e abrindo WhatsApp...</div>`;
+            atualizarBotao("Pagamento aprovado! Salvando pedido...", true);
+            await confirmarPedidoPago(paymentId);
+            setTimeout(() => abrirWhatsApp("PAGO VIA PIX"), 1200);
+          }
+        } catch (erro) {
+          console.warn("Falha ao consultar status:", erro);
+        }
+      }, 5000);
+    }
+
+    async function confirmarPedidoPago(paymentId) {
+      try {
+        const resposta = await fetch("/api/pedidos/confirmar", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            paymentId,
+            pedido: dadosPedido()
+          })
+        });
+
+        if (!resposta.ok) {
+          const dados = await resposta.json();
+          console.warn("Não foi possível salvar pedido:", dados);
+        }
+      } catch (erro) {
+        console.warn("Falha ao salvar pedido pago:", erro);
+      }
+    }
+
+    function copiarPix() {
+      if (!pixAtual || !pixAtual.copiaECola) {
+        alert("Pix ainda não foi gerado.");
+        return;
+      }
+
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(pixAtual.copiaECola).then(() => alert("Pix copia e cola copiado!"))
+          .catch(() => alert("Copie manualmente o Pix copia e cola."));
+      } else {
+        alert("Copie manualmente o Pix copia e cola.");
+      }
+    }
+
+    ["nome", "bloco", "apartamento", "observacao"].forEach(id => {
+      document.getElementById(id).addEventListener("input", resetarPix);
+    });
+
+    carregarCardapio();
+    atualizarBotao();
+  </script>
+</body>
+</html>
